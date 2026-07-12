@@ -1,0 +1,11 @@
+core/target/
+cleanup_service/.venv/
+cleanup_service/.env
+cleanup_service/__pycache__/
+whisper.cpp/
+*.wav
+*.wav.txt
+config.toml
+Cargo.lock
+docs/learning-roadmap.md
+
