@@ -1,0 +1,11 @@
+# Copy this to config.toml (same directory as the speaktype binary) and adjust.
+
+hotkey = "ALT+SPACE"
+
+whisper_bin = "../whisper.cpp/build/bin/whisper-cli"
+whisper_model = "../whisper.cpp/models/ggml-base.en.bin"
+
+scratch_dir = "/tmp/speaktype"
+
+cleanup_service_url = "http://127.0.0.1:8008"
+enable_cleanup = true

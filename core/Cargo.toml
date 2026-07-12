@@ -1,0 +1,43 @@
+[package]
+name = "speaktype_core"
+version = "0.1.0"
+edition = "2021"
+description = "Cross-application speech-to-text daemon: global hotkey -> audio capture -> local Whisper transcription -> LLM cleanup -> text injection"
+
+[[bin]]
+name = "speaktype"
+path = "src/main.rs"
+
+[dependencies]
+# Global hotkey registration (OS-level, works regardless of focused app)
+global-hotkey = "0.6"
+
+# Event loop that global-hotkey needs to pump OS events on
+tao = "0.30"
+
+# Audio capture from the default input device
+cpal = "0.15"
+
+# WAV file writing (whisper.cpp reads 16kHz mono WAV)
+hound = "3.5"
+
+# Simulated keystrokes -> injects text into whatever text box has OS focus
+enigo = "0.2"
+
+# Async runtime, used for talking to the local cleanup service and spawning whisper.cpp
+tokio = { version = "1", features = ["full"] }
+
+# HTTP client to call the Python cleanup microservice
+reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Config file (hotkey, whisper binary path, model path, cleanup service URL)
+config = "0.14"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+anyhow = "1"
