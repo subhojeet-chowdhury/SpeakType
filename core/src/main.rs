@@ -83,22 +83,26 @@ async fn run_pipeline(cfg: AppConfig, wav_path: PathBuf) {
     };
     tracing::info!("raw transcript: {raw}");
 
-    let final_text = if cfg.enable_cleanup {
+    let mut injector = match inject::Injector::new() {
+        Ok(i) => i,
+        Err(e) => {
+            tracing::error!("failed to initialize keystroke injector: {e}");
+            return;
+        }
+    };
+
+    if cfg.enable_cleanup {
         let app_context = focus::active_app_name().unwrap_or_else(|_| "unknown".to_string());
-        match cleanup::clean_transcript(&cfg.cleanup_service_url, &raw, &app_context).await {
-            Ok(cleaned) => cleaned,
-            Err(e) => {
-                tracing::warn!("cleanup service failed ({e}), falling back to raw transcript");
-                raw
+        if let Err(e) = cleanup::clean_transcript(&cfg.cleanup_service_url, &raw, &app_context, &mut injector).await {
+            tracing::warn!("cleanup service failed ({e}), falling back to raw transcript injection");
+            if let Err(e2) = injector.inject_chunk(&raw) {
+                tracing::error!("fallback injection failed: {e2}");
             }
         }
     } else {
-        raw
-    };
-
-    tracing::info!("injecting: {final_text}");
-    if let Err(e) = inject::inject_text(&final_text) {
-        tracing::error!("injection failed: {e}");
+        if let Err(e) = injector.inject_chunk(&raw) {
+            tracing::error!("injection failed: {e}");
+        }
     }
 }
 

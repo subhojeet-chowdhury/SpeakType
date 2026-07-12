@@ -57,11 +57,7 @@ def route_tone(app_context: str) -> str:
     return TONE_PROFILES[bucket]
 
 class CleanupPipeline:
-    """
-    A simple pipeline class that mimics the LangGraph `.invoke()` signature
-    so we don't have to rewrite main.py.
-    """
-    def invoke(self, state: dict) -> dict:
+    def stream(self, state: dict):
         app_context = state.get("app_context", "unknown")
         raw_transcript = state.get("raw_transcript", "")
         
@@ -79,20 +75,19 @@ class CleanupPipeline:
             "The raw transcript will be provided in <transcript> tags. Do not include the tags in your output."
         )
         
-        # Instantiate the model. This is very cheap locally.
-        # We use flash-lite-latest which is the equivalent of the 8b models for low latency.
         model = genai.GenerativeModel(
             model_name="gemini-flash-lite-latest",
             system_instruction=system_prompt,
             generation_config=genai.types.GenerationConfig(temperature=0.0)
         )
         
-        resp = model.generate_content(f"<transcript>{raw_transcript}</transcript>")
+        resp = model.generate_content(f"<transcript>{raw_transcript}</transcript>", stream=True)
         
-        # Return the modified state to mimic LangGraph
-        state["tone_instruction"] = tone_instruction
-        state["cleaned_text"] = resp.text.strip()
-        return state
+        for chunk in resp:
+            if chunk.text:
+                yield chunk.text
 
 # Expose the pipeline as `cleanup_graph` so main.py can import it seamlessly
 cleanup_graph = CleanupPipeline()
+
+

@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
+use crate::inject::Injector;
 
 #[derive(Serialize)]
 struct CleanupRequest<'a> {
@@ -7,19 +8,14 @@ struct CleanupRequest<'a> {
     app_context: &'a str,
 }
 
-#[derive(Deserialize)]
-struct CleanupResponse {
-    cleaned_text: String,
-}
-
 /// Sends the raw Whisper transcript to the local Python cleanup service
-/// (small LangGraph: one cleanup node, one tone-routing node keyed on
-/// `app_context`) and returns the cleaned, formatted text ready for injection.
+/// and injects the text chunks as they arrive over the HTTP stream.
 pub async fn clean_transcript(
     service_url: &str,
     raw_transcript: &str,
     app_context: &str,
-) -> Result<String> {
+    injector: &mut Injector,
+) -> Result<()> {
     let client = reqwest::Client::new();
     let resp = client
         .post(format!("{service_url}/cleanup"))
@@ -31,7 +27,18 @@ pub async fn clean_transcript(
         .await
         .context("failed to reach cleanup service — is it running? (see README)")?;
 
-    let resp = resp.error_for_status().context("cleanup service returned an error")?;
-    let body: CleanupResponse = resp.json().await.context("failed to parse cleanup response")?;
-    Ok(body.cleaned_text)
+    let mut resp = resp.error_for_status().context("cleanup service returned an error")?;
+    
+    let mut final_text = String::new();
+    while let Some(chunk) = resp.chunk().await.context("error reading stream chunk")? {
+        if let Ok(text) = std::str::from_utf8(&chunk) {
+            final_text.push_str(text);
+            if let Err(e) = injector.inject_chunk(text) {
+                tracing::error!("failed to inject chunk: {e}");
+            }
+        }
+    }
+    
+    tracing::info!("injected (streamed): {final_text}");
+    Ok(())
 }

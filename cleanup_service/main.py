@@ -33,20 +33,29 @@ def health():
     return {"status": "ok"}
 
 
-@app.post("/cleanup", response_model=CleanupResponse)
+from fastapi.responses import StreamingResponse
+
+@app.post("/cleanup")
 def cleanup_endpoint(req: CleanupRequest):
     if not req.raw_transcript.strip():
         raise HTTPException(status_code=400, detail="raw_transcript is empty")
+    
     try:
-        result = cleanup_graph.invoke(
-            {
-                "raw_transcript": req.raw_transcript,
-                "app_context": req.app_context,
-                "tone_instruction": "",
-                "cleaned_text": "",
-            }
-        )
-    except Exception as e:  # noqa: BLE001 - surface any LLM/API failure to caller
+        stream_iter = cleanup_graph.stream({
+            "raw_transcript": req.raw_transcript,
+            "app_context": req.app_context,
+        })
+        first_chunk = next(stream_iter, None)
+    except Exception as e:
         raise HTTPException(status_code=502, detail=f"cleanup failed: {e}") from e
 
-    return CleanupResponse(cleaned_text=result["cleaned_text"])
+    def chunk_generator():
+        if first_chunk is not None:
+            yield first_chunk
+        try:
+            for chunk in stream_iter:
+                yield chunk
+        except Exception as e:
+            print(f"Stream error: {e}")
+
+    return StreamingResponse(chunk_generator(), media_type="text/plain")
