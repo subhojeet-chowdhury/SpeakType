@@ -25,6 +25,10 @@ TONE_PROFILES = {
         "Format as a professional email fragment. Full sentences, proper "
         "punctuation and capitalization, no filler words, no slang."
     ),
+    "notes": (
+        "Format as a clean, structured note or bullet point. Clear formatting, "
+        "standard capitalization. Remove all conversational filler."
+    ),
     "default": (
         "Format as clean, natural written text. Fix punctuation and "
         "capitalization, remove filler words (um, uh, like, so), keep the "
@@ -33,18 +37,50 @@ TONE_PROFILES = {
 }
 
 APP_TO_BUCKET = {
+    # Code Editors & Terminals
     "code": "code_editor",
+    "electron": "code_editor",
     "vscode": "code_editor",
+    "cursor": "code_editor",
+    "zed": "code_editor",
     "jetbrains": "code_editor",
+    "pycharm": "code_editor",
+    "intellij": "code_editor",
+    "webstorm": "code_editor",
     "sublime": "code_editor",
+    "vim": "code_editor",
+    "neovim": "code_editor",
+    "emacs": "code_editor",
+    "terminal": "code_editor",
+    "iterm": "code_editor",
+    "wezterm": "code_editor",
+    "alacritty": "code_editor",
+    "ghostty": "code_editor",
+    # Chat & Messaging
     "slack": "chat",
     "discord": "chat",
     "telegram": "chat",
     "whatsapp": "chat",
     "signal": "chat",
+    "messages": "chat",
+    "teams": "chat",
+    "messenger": "chat",
+    "zoom": "chat",
+    # Email
     "thunderbird": "email",
     "outlook": "email",
     "mail": "email",
+    "superhuman": "email",
+    "spark": "email",
+    # Notes & Docs
+    "notes": "notes",
+    "obsidian": "notes",
+    "notion": "notes",
+    "evernote": "notes",
+    "logseq": "notes",
+    "roam": "notes",
+    "word": "notes",
+    "pages": "notes",
 }
 
 def route_tone(app_context: str) -> str:
@@ -57,6 +93,7 @@ def route_tone(app_context: str) -> str:
     return TONE_PROFILES[bucket]
 
 class CleanupPipeline:
+
     def stream(self, state: dict):
         app_context = state.get("app_context", "unknown")
         raw_transcript = state.get("raw_transcript", "")
