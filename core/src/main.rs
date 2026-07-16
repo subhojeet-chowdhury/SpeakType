@@ -125,6 +125,17 @@ fn main() -> Result<()> {
 /// The full post-recording pipeline: local Whisper transcription -> optional
 /// LLM cleanup (tone-routed by focused app) -> keystroke injection.
 async fn run_pipeline(cfg: AppConfig, wav_path: PathBuf) {
+    // Privacy guard: automatically delete the scratch audio and text files from disk
+    // when this function returns, even if it panics or fails early.
+    struct PrivacyGuard(PathBuf);
+    impl Drop for PrivacyGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_file(&self.0);
+            let _ = std::fs::remove_file(self.0.with_extension("wav.txt"));
+        }
+    }
+    let _guard = PrivacyGuard(wav_path.clone());
+
     let raw = match transcribe::transcribe(&cfg.whisper_bin, &cfg.whisper_model, &wav_path).await {
         Ok(text) if !text.trim().is_empty() => text,
         Ok(_) => {
