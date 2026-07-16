@@ -16,6 +16,9 @@ use config::AppConfig;
 
 use tracing_subscriber::fmt::writer::MakeWriterExt;
 
+// os will use services to delete the log files, sorted by dates
+// add int. in config file to put stdout result to void dev/null
+
 fn main() -> Result<()> {
     // Set up daily rolling log files in the `logs/` directory
     let file_appender = tracing_appender::rolling::daily("logs", "speaktype.log");
@@ -40,10 +43,10 @@ fn main() -> Result<()> {
     hotkey_manager.register(hotkey)?;
 
     let receiver = GlobalHotKeyEvent::receiver();
-    let rt = tokio::runtime::Runtime::new()?;
 
     // Recorder lives across the press->release span of a single dictation.
     let mut active_recorder: Option<audio::Recorder> = None;
+    let is_busy = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
 
     event_loop.run(move |_event, _, control_flow| {
         *control_flow = ControlFlow::Wait;
@@ -51,6 +54,10 @@ fn main() -> Result<()> {
         if let Ok(evt) = receiver.try_recv() {
             match evt.state {
                 HotKeyState::Pressed => {
+                    if is_busy.load(std::sync::atomic::Ordering::SeqCst) {
+                        tracing::warn!("pipeline is busy, ignoring hotkey press");
+                        return;
+                    }
                     if active_recorder.is_some() {
                         return; // already recording, ignore repeat press
                     }
@@ -68,9 +75,26 @@ fn main() -> Result<()> {
                         tracing::error!("failed to finalize recording: {e}");
                         return;
                     }
+                    
                     let wav_path = cfg.scratch_dir.join("dictation.wav");
                     let cfg_clone = cfg.clone();
-                    rt.block_on(run_pipeline(cfg_clone, wav_path));
+                    let busy_flag = is_busy.clone();
+                    
+                    busy_flag.store(true, std::sync::atomic::Ordering::SeqCst);
+                    std::thread::spawn(move || {
+                        // Create a single-threaded local runtime for this dictation.
+                        // This avoids the `Send` trait bound errors caused by Enigo's macOS implementation,
+                        // while still running in the background so we don't freeze the OS event loop!
+                        let local_rt = tokio::runtime::Builder::new_current_thread()
+                            .enable_all()
+                            .build()
+                            .unwrap();
+                            
+                        local_rt.block_on(async move {
+                            run_pipeline(cfg_clone, wav_path).await;
+                            busy_flag.store(false, std::sync::atomic::Ordering::SeqCst);
+                        });
+                    });
                 }
             }
         }

@@ -30,8 +30,3 @@ impl Injector {
         Ok(())
     }
 }
-
-pub fn inject_text(text: &str) -> Result<()> {
-    let mut injector = Injector::new()?;
-    injector.inject_chunk(text)
-}
