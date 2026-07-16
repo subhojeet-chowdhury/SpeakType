@@ -44,7 +44,7 @@ graph TD
 SpeakType is split into two lightweight, decoupled services.
 
 ### 1. Build the Whisper Engine
-First, clone the local inference engine and download the base model (~140MB):
+First, clone the local inference engine and download the small.en model (~460MB):
 ```bash
 ./scripts/setup_whisper.sh
 ```
@@ -57,8 +57,9 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-# Add your Gemini API Key
-echo "GEMINI_API_KEY=your_key_here" > .env
+# Configure your LLM Provider (Gemini or local Ollama)
+cp .env.example .env
+# Edit .env and add your GEMINI_API_KEY, or set LLM_PROVIDER=ollama
 
 # Run the server
 uvicorn main:app --host 127.0.0.1 --port 8008
@@ -79,6 +80,9 @@ Once both services are running:
 2. Hold `ALT + SPACE`
 3. Speak normally
 4. Release the keys. Your text will instantly stream into the field perfectly formatted!
+
+### 4. Logs and Troubleshooting
+The Rust daemon writes daily rolling logs to `core/logs/speaktype.log.*`. If the daemon fails to start or a hotkey press is ignored, check these logs for detailed error messages.
 
 ---
 *Built with Rust, Python, and a lot of caffeine.*
