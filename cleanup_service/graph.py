@@ -119,6 +119,7 @@ class CleanupPipeline:
             "2. Fix punctuation and capitalization.\n"
             "3. Do NOT add content that wasn't spoken. Do NOT summarize.\n"
             "4. Return ONLY the cleaned text, nothing else — no preamble, no quotes, no explanation.\n\n"
+            "5. Do NOT change the order of spoken words"
             f"Tone/format for this context: {tone_instruction}\n\n"
             "The raw transcript will be provided in <transcript> tags. Do not include the tags in your output."
         )

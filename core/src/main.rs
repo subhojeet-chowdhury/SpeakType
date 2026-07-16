@@ -14,8 +14,18 @@ use tao::event_loop::{ControlFlow, EventLoopBuilder};
 
 use config::AppConfig;
 
+use tracing_subscriber::fmt::writer::MakeWriterExt;
+
 fn main() -> Result<()> {
-    tracing_subscriber::fmt::init();
+    // Set up daily rolling log files in the `logs/` directory
+    let file_appender = tracing_appender::rolling::daily("logs", "speaktype.log");
+    let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+
+    // Write logs to both stdout (for the terminal) and the rolling file (for the daemon)
+    tracing_subscriber::fmt()
+        .with_writer(std::io::stdout.and(non_blocking))
+        .init();
+
     let cfg = AppConfig::load()?;
     std::fs::create_dir_all(&cfg.scratch_dir)?;
 
