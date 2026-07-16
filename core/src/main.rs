@@ -31,6 +31,27 @@ fn main() -> Result<()> {
 
     let cfg = AppConfig::load()?;
     std::fs::create_dir_all(&cfg.scratch_dir)?;
+    
+    // --- Startup Validation ---
+    if !cfg.whisper_bin.exists() || !cfg.whisper_bin.is_file() {
+        tracing::error!("Whisper binary not found at {:?}. Please run scripts/setup_whisper.sh", cfg.whisper_bin);
+        anyhow::bail!("whisper binary missing");
+    }
+
+    if !cfg.whisper_model.exists() || !cfg.whisper_model.is_file() {
+        tracing::error!("Whisper model not found at {:?}. Please run scripts/setup_whisper.sh", cfg.whisper_model);
+        anyhow::bail!("whisper model missing");
+    }
+
+    let health_url = cfg.cleanup_service_url.replace("/cleanup", "/health");
+    tracing::info!("Validating cleanup service at {}...", health_url);
+    
+    let rt = tokio::runtime::Builder::new_current_thread().enable_all().build()?;
+    if let Err(e) = rt.block_on(async { reqwest::get(&health_url).await }) {
+        tracing::error!("Could not connect to cleanup service. Is the Python uvicorn server running? ({e})");
+        anyhow::bail!("cleanup service unreachable");
+    }
+    // --------------------------
 
     tracing::info!("speaktype starting. hotkey = {}", cfg.hotkey);
     tracing::info!("hold the hotkey to record, release to transcribe + inject");
