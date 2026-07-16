@@ -27,8 +27,8 @@ pub async fn transcribe(whisper_bin: &Path, model: &Path, wav_path: &Path) -> Re
 
     // -nt: no timestamps, -otxt: write a .txt file next to the wav,
     // -l en: assume English (make configurable later for multilingual use).
-    let output = Command::new(whisper_bin)
-        .arg("-m")
+    let mut cmd = Command::new(whisper_bin);
+    cmd.arg("-m")
         .arg(model)
         .arg("-f")
         .arg(wav_path)
@@ -36,9 +36,12 @@ pub async fn transcribe(whisper_bin: &Path, model: &Path, wav_path: &Path) -> Re
         .arg("-otxt")
         .arg("-l")
         .arg("en")
-        .output()
-        .await
-        .context("failed to spawn whisper.cpp process")?;
+        .kill_on_drop(true);
+
+    let output = match tokio::time::timeout(std::time::Duration::from_secs(30), cmd.output()).await {
+        Ok(res) => res.context("failed to spawn whisper.cpp process")?,
+        Err(_) => bail!("whisper.cpp transcription timed out after 30 seconds"),
+    };
 
     if !output.status.success() {
         bail!(

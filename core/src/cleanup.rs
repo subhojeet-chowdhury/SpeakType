@@ -17,25 +17,44 @@ pub async fn clean_transcript(
     injector: &mut Injector,
 ) -> Result<()> {
     let client = reqwest::Client::new();
-    let resp = client
+    let req_future = client
         .post(format!("{service_url}/cleanup"))
         .json(&CleanupRequest {
             raw_transcript,
             app_context,
         })
-        .send()
+        .send();
+
+    let resp = tokio::time::timeout(std::time::Duration::from_secs(10), req_future)
         .await
+        .context("cleanup service connection timed out after 10 seconds")?
         .context("failed to reach cleanup service — is it running? (see README)")?;
 
     let mut resp = resp.error_for_status().context("cleanup service returned an error")?;
     
     let mut final_text = String::new();
-    while let Some(chunk) = resp.chunk().await.context("error reading stream chunk")? {
-        if let Ok(text) = std::str::from_utf8(&chunk) {
-            final_text.push_str(text);
-            if let Err(e) = injector.inject_chunk(text) {
-                tracing::error!("failed to inject chunk: {e}");
+    loop {
+        let chunk_future = resp.chunk();
+        let chunk_res = tokio::time::timeout(std::time::Duration::from_secs(15), chunk_future).await;
+        
+        let chunk = match chunk_res {
+            Ok(res) => res.context("error reading stream chunk")?,
+            Err(_) => {
+                tracing::warn!("cleanup stream chunk timed out, injecting what we have so far");
+                break;
             }
+        };
+        
+        match chunk {
+            Some(c) => {
+                if let Ok(text) = std::str::from_utf8(&c) {
+                    final_text.push_str(text);
+                    if let Err(e) = injector.inject_chunk(text) {
+                        tracing::error!("failed to inject chunk: {e}");
+                    }
+                }
+            }
+            None => break, // stream finished
         }
     }
     
