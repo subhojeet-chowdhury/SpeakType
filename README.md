@@ -51,13 +51,21 @@ SpeakType's architecture allows you to customize the pipeline based on whether y
 
 | Component | Option | Est. Latency | Trade-off |
 | :--- | :--- | :--- | :--- |
-| **STT (Whisper)** | `base.en` model | **~200ms** | Less accurate on complex words, blazing fast |
-| **STT (Whisper)** | `small.en` model | ~500ms | Highly accurate, noticeably slower on CPU |
-| **LLM (Cleanup)** | **Groq API** | **~500ms** | Cloud-based (sends text to Groq), incredible reasoning and speed |
+| **STT (Whisper)** | `base.en` model (Local) | **~150-200ms** | 100% Private, blazing fast, slightly less accurate on complex words |
+| **STT (Whisper)** | `small.en` model (Local) | ~500ms | Highly accurate, noticeably slower on CPU |
+| **STT (Groq)** | **Groq API** | ~400ms | Cloud-based, near-instant inference but incurs network upload overhead |
+| **LLM (Cleanup)** | **Groq API** | **~400-500ms** | Cloud-based (sends text to Groq), incredible reasoning and speed |
 | **LLM (Cleanup)** | Local Ollama | ~800ms+ | 100% Private (local), but weaker reasoning (struggles to format text without chatting) |
-| **LLM (Cleanup)** | Gemini Flash | ~1500ms | Cloud-based, excellent reasoning, moderate speed |
+| **LLM (Cleanup)** | Gemini Flash | ~1200-1500ms | Cloud-based, excellent reasoning, moderate speed |
 
-*Note: STT latency scales linearly with the length of your audio since we transcribe the entire block at once after you release the hotkey.*
+*Note: Local STT latency scales linearly with the length of your audio since we transcribe the entire block at once after you release the hotkey.*
+
+### 🏆 The "God Tier" Combination (Sub-800ms latency)
+For the absolute best balance of speed, privacy, and accuracy, we recommend:
+1. **STT:** `whisper` using the `base.en` model (with Metal enabled on Mac).
+2. **LLM:** `groq` using the `llama-3.3-70b-versatile` model.
+
+*Why?* The local STT avoids network upload overhead for the heavy audio file (transcribing locally in <200ms), while the Groq LLM easily handles the text cleanup in <500ms.
 
 ## 🚀 Quick Start
 

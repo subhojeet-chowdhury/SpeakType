@@ -7,6 +7,12 @@ pub struct AppConfig {
     /// recording, release stops it and kicks off transcription.
     pub hotkey: String,
 
+    /// STT Provider: "whisper" or "groq"
+    pub stt_provider: String,
+
+    /// Groq API key for cloud STT (if stt_provider == "groq")
+    pub groq_api_key: Option<String>,
+
     /// Example: "http://127.0.0.1:8080"
     pub whisper_server_url: String,
 
@@ -30,6 +36,7 @@ impl AppConfig {
             .add_source(config::File::with_name("config").required(false))
             .add_source(config::Environment::with_prefix("SPEAKTYPE"))
             .set_default("hotkey", "ALT+SPACE")?
+            .set_default("stt_provider", "whisper")?
             .set_default("whisper_server_url", "http://127.0.0.1:8080")?
             .set_default("scratch_dir", "/tmp/speaktype")?
             .set_default("cleanup_service_url", "http://127.0.0.1:8008")?

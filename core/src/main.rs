@@ -35,10 +35,17 @@ fn main() -> Result<()> {
     let rt = tokio::runtime::Builder::new_current_thread().enable_all().build()?;
     
     // --- Startup Validation ---
-    tracing::info!("Validating whisper server at {}...", cfg.whisper_server_url);
-    if let Err(e) = rt.block_on(async { reqwest::get(&cfg.whisper_server_url).await }) {
-        tracing::error!("Could not connect to whisper server. Is it running? ({e})\nSee README or run scripts/setup_whisper.sh");
-        anyhow::bail!("whisper server unreachable");
+    if cfg.stt_provider == "whisper" {
+        tracing::info!("Validating whisper server at {}...", cfg.whisper_server_url);
+        if let Err(e) = rt.block_on(async { reqwest::get(&cfg.whisper_server_url).await }) {
+            tracing::error!("Could not connect to whisper server. Is it running? ({e})\nSee README or run scripts/setup_whisper.sh");
+            anyhow::bail!("whisper server unreachable");
+        }
+    } else if cfg.stt_provider == "groq" {
+        if cfg.groq_api_key.is_none() {
+            tracing::error!("stt_provider is set to 'groq' but no 'groq_api_key' was found in config.toml or SPEAKTYPE_GROQ_API_KEY env var.");
+            anyhow::bail!("missing groq_api_key");
+        }
     }
 
     let health_url = cfg.cleanup_service_url.replace("/cleanup", "/health");
@@ -136,7 +143,7 @@ async fn run_pipeline(cfg: AppConfig, wav_path: PathBuf) {
     
     let transcribe_start = std::time::Instant::now();
 
-    let raw = match transcribe::transcribe(&cfg.whisper_server_url, &wav_path).await {
+    let raw = match transcribe::transcribe(&cfg, &wav_path).await {
         Ok(text) if !text.trim().is_empty() => text,
         Ok(_) => {
             tracing::warn!("transcript was empty, nothing to inject");

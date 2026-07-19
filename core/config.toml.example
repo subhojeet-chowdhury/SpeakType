@@ -2,7 +2,11 @@
 
 hotkey = "ALT+SPACE"
 
-# The URL of your local whisper.cpp server
+# STT Provider ("whisper" or "groq")
+stt_provider = "whisper"
+# groq_api_key = "gsk_..."
+
+# The URL of your local whisper.cpp server (if using whisper)
 whisper_server_url = "http://127.0.0.1:8080"
 
 scratch_dir = "/tmp/speaktype"
