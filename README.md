@@ -45,6 +45,20 @@ graph TD
     F -->|Enigo Keystroke Injection| G[Types Directly Into Your App]
 ```
 
+## ⚡ Performance & Trade-offs
+
+SpeakType's architecture allows you to customize the pipeline based on whether you value speed, privacy, or accuracy.
+
+| Component | Option | Est. Latency | Trade-off |
+| :--- | :--- | :--- | :--- |
+| **STT (Whisper)** | `base.en` model | **~200ms** | Less accurate on complex words, blazing fast |
+| **STT (Whisper)** | `small.en` model | ~500ms | Highly accurate, noticeably slower on CPU |
+| **LLM (Cleanup)** | **Groq API** | **~500ms** | Cloud-based (sends text to Groq), incredible reasoning and speed |
+| **LLM (Cleanup)** | Local Ollama | ~800ms+ | 100% Private (local), but weaker reasoning (struggles to format text without chatting) |
+| **LLM (Cleanup)** | Gemini Flash | ~1500ms | Cloud-based, excellent reasoning, moderate speed |
+
+*Note: STT latency scales linearly with the length of your audio since we transcribe the entire block at once after you release the hotkey.*
+
 ## 🚀 Quick Start
 
 SpeakType is split into two lightweight, decoupled services.
