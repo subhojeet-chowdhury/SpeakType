@@ -136,6 +136,10 @@ async fn run_pipeline(cfg: AppConfig, wav_path: PathBuf) {
     }
     let _guard = PrivacyGuard(wav_path.clone());
 
+    let pipeline_start = std::time::Instant::now();
+    
+    let transcribe_start = std::time::Instant::now();
+
     let raw = match transcribe::transcribe(&cfg.whisper_bin, &cfg.whisper_model, &wav_path).await {
         Ok(text) if !text.trim().is_empty() => text,
         Ok(_) => {
@@ -147,7 +151,8 @@ async fn run_pipeline(cfg: AppConfig, wav_path: PathBuf) {
             return;
         }
     };
-    tracing::info!("raw transcript: {raw}");
+    let transcribe_time = transcribe_start.elapsed();
+    tracing::info!("raw transcript: {raw} (took {}ms)", transcribe_time.as_millis());
 
     let mut injector = match inject::Injector::new() {
         Ok(i) => i,
@@ -158,9 +163,12 @@ async fn run_pipeline(cfg: AppConfig, wav_path: PathBuf) {
     };
 
     if cfg.enable_cleanup {
+        let focus_start = std::time::Instant::now();
         let app_context = focus::active_app_name().unwrap_or_else(|_| "unknown".to_string());
-        tracing::info!("active app context detected: {}", app_context);
+        let focus_time = focus_start.elapsed();
+        tracing::info!("active app context detected: {} (took {}ms)", app_context, focus_time.as_millis());
         
+        let cleanup_start = std::time::Instant::now();
         if let Err(e) = cleanup::clean_transcript(&cfg.cleanup_service_url, &raw, &app_context, &mut injector, &cfg.injection_mode).await {
             tracing::warn!("cleanup service failed ({e}), falling back to raw transcript injection");
             
@@ -174,6 +182,21 @@ async fn run_pipeline(cfg: AppConfig, wav_path: PathBuf) {
                 }
             }
         }
+        
+        let cleanup_time = cleanup_start.elapsed();
+        
+        tracing::info!(
+            "\n--- LATENCY SUMMARY ---\n\
+            Transcribe : {}ms\n\
+            Focus Det. : {}ms\n\
+            LLM Cleanup: {}ms\n\
+            Total      : {}ms\n\
+            -----------------------",
+            transcribe_time.as_millis(),
+            focus_time.as_millis(),
+            cleanup_time.as_millis(),
+            pipeline_start.elapsed().as_millis()
+        );
     } else {
         if cfg.injection_mode == "batch" {
             if let Err(e) = injector.inject_batch(&raw) {
@@ -184,6 +207,14 @@ async fn run_pipeline(cfg: AppConfig, wav_path: PathBuf) {
                 tracing::error!("stream injection failed: {e}");
             }
         }
+        tracing::info!(
+            "\n--- LATENCY SUMMARY ---\n\
+            Transcribe : {}ms\n\
+            Total      : {}ms\n\
+            -----------------------",
+            transcribe_time.as_millis(),
+            pipeline_start.elapsed().as_millis()
+        );
     }
 }
 
