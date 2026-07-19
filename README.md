@@ -28,21 +28,21 @@ The app instantly types out your words directly into whichever app you are using
 
 ## ✨ Features
 
-- **100% Local Voice Recognition**: Uses `whisper.cpp` to process your voice directly on your device. No audio ever leaves your computer.
-- **Context-Aware AI Formatting**: Automatically detects which app you are currently using (e.g., Slack, VS Code, Notes) and uses Google's ultra-fast `gemini-flash-lite` to apply the perfect tone, punctuation, and formatting.
+- **Configurable STT Engine**: Use `whisper.cpp` for 100% local, private voice recognition, or plug in the **Groq Whisper API** for ultra-fast cloud transcription.
+- **Context-Aware AI Formatting**: Automatically detects which app you are currently using (e.g., Slack, VS Code, Notes) and uses your LLM of choice (**Groq**, **Gemini**, or local **Ollama**) to apply the perfect tone, punctuation, and formatting.
 - **Global Hotkey Support**: Works everywhere. You don't need to install app-specific extensions. Just hold `ALT+SPACE` (or your custom hotkey) and start talking.
-- **Real-Time Streaming Injection**: Transcribed text streams directly into your active text field as the AI generates it, giving you zero perceived latency.
+- **Smart Text Injection**: Choose between `batch` (instant clipboard paste, immune to autocorrect) or `stream` (real-time visual keystroke injection).
 
 ## 🧠 How it Works
 
 ```mermaid
 graph TD
     A[Hold ALT+SPACE] -->|Rust Audio Capture| B(Record Mic)
-    B -->|Release Hotkey| C(Local Whisper HTTP Server)
+    B -->|Release Hotkey| C{STT: Whisper or Groq}
     C -->|Raw Transcript| D{Native Focus Detection API}
-    D -->|Context: Slack/Code/Notes| E[FastAPI Python Service]
-    E -->|Gemini Flash Lite Cleanup| F(Cleaned Text Stream)
-    F -->|Enigo Keystroke Injection| G[Types Directly Into Your App]
+    D -->|Context: Slack/Code/Notes| E[FastAPI: Groq / Gemini / Ollama]
+    E -->|Cleaned Text| F(Injection: Batch or Stream)
+    F -->|OS API| G[Types Directly Into Your App]
 ```
 
 ## ⚡ Performance & Trade-offs

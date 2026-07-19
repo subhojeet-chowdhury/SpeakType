@@ -14,8 +14,11 @@ scratch_dir = "/tmp/speaktype"
 cleanup_service_url = "http://127.0.0.1:8008"
 enable_cleanup = true
 
-# Text Injection Strategy
-# "batch" (default): 100% reliable, immune to macOS autocorrect. Buffers text and pastes via clipboard (Cmd+V).
-# "stream": Cool visual typing effect. Injects characters as they arrive from the LLM. 
-#           Trade-off: Fast typing can trigger macOS autocorrect, scrambling the text in apps like Apple Mail.
+# Text Injection Strategy: "batch" or "stream"
+#
+# "batch" (Recommended): 100% reliable and immune to OS autocorrect interference. 
+# The AI streams text in the background, then instantly pastes the final result via clipboard (Cmd+V).
+#
+# "stream": Types out characters one-by-one as they arrive from the AI for a cool real-time visual effect.
+# Trade-off: Fast keystroke injection can trigger OS autocorrect and scramble text in apps like Mail.
 injection_mode = "batch"
