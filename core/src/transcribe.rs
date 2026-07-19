@@ -1,60 +1,39 @@
 use anyhow::{bail, Context, Result};
 use std::path::Path;
-use tokio::process::Command;
+use reqwest::multipart;
+use serde_json::Value;
 
-/// Runs local whisper.cpp inference on a 16kHz mono WAV file and returns the
-/// raw transcript. This is the "local, offline, private" leg of the pipeline —
-/// no audio ever leaves the machine.
-///
-/// We shell out to the compiled `whisper-cli` binary rather than binding via
-/// FFI (whisper-rs). Shelling out is slightly slower to start per-call, but
-/// it keeps this crate's build simple (no bundled C++ compile step) and
-/// makes it trivial to swap the STT engine later (e.g. faster-whisper)
-/// without touching Rust code — you only change the config paths.
-pub async fn transcribe(whisper_bin: &Path, model: &Path, wav_path: &Path) -> Result<String> {
-    if !whisper_bin.exists() {
-        bail!(
-            "whisper binary not found at {:?} — build whisper.cpp first (see README)",
-            whisper_bin
-        );
-    }
-    if !model.exists() {
-        bail!(
-            "whisper model not found at {:?} — download a ggml model first (see README)",
-            model
-        );
-    }
-
-    // -nt: no timestamps, -otxt: write a .txt file next to the wav,
-    // -l en: assume English (make configurable later for multilingual use).
-    let mut cmd = Command::new(whisper_bin);
-    cmd.arg("-m")
-        .arg(model)
-        .arg("-f")
-        .arg(wav_path)
-        .arg("-nt")
-        .arg("-otxt")
-        .arg("-l")
-        .arg("en")
-        .kill_on_drop(true);
-
-    let output = match tokio::time::timeout(std::time::Duration::from_secs(30), cmd.output()).await {
-        Ok(res) => res.context("failed to spawn whisper.cpp process")?,
-        Err(_) => bail!("whisper.cpp transcription timed out after 30 seconds"),
-    };
-
-    if !output.status.success() {
-        bail!(
-            "whisper.cpp exited with {:?}: {}",
-            output.status.code(),
-            String::from_utf8_lossy(&output.stderr)
-        );
-    }
-
-    let txt_path = wav_path.with_extension("wav.txt");
-    let transcript = tokio::fs::read_to_string(&txt_path)
+/// Sends a 16kHz mono WAV file to the local whisper.cpp HTTP server.
+/// This keeps the model loaded in RAM, achieving near-zero latency.
+pub async fn transcribe(server_url: &str, wav_path: &Path) -> Result<String> {
+    let audio_data = tokio::fs::read(wav_path)
         .await
-        .with_context(|| format!("expected whisper output at {txt_path:?}"))?;
+        .context("failed to read dictation.wav from disk")?;
 
-    Ok(transcript.trim().to_string())
+    let part = multipart::Part::bytes(audio_data)
+        .file_name("dictation.wav")
+        .mime_str("audio/wav")?;
+
+    let form = multipart::Form::new().part("file", part);
+
+    let client = reqwest::Client::new();
+    let req_future = client
+        .post(format!("{server_url}/inference"))
+        .multipart(form)
+        .send();
+
+    let resp = tokio::time::timeout(std::time::Duration::from_secs(30), req_future)
+        .await
+        .context("whisper server connection timed out after 30 seconds")?
+        .context("failed to reach whisper server — is it running on port 8080? (see README)")?;
+
+    let resp = resp.error_for_status().context("whisper server returned an error status code")?;
+
+    let json: Value = resp.json().await.context("failed to parse JSON from whisper server")?;
+    
+    if let Some(text) = json.get("text").and_then(|t| t.as_str()) {
+        Ok(text.trim().to_string())
+    } else {
+        bail!("whisper server response missing 'text' field: {:?}", json);
+    }
 }

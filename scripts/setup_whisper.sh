@@ -10,8 +10,8 @@ if [ ! -d whisper.cpp ]; then
 fi
 
 cd whisper.cpp
-cmake -B build
-cmake --build build -j --config Release
+cmake -B build -DWHISPER_BUILD_SERVER=ON
+cmake --build build -j --config Release --target server
 
 # base.en is a good starting point: ~140MB, decent accuracy, fast on CPU.
 # Swap for small.en/medium.en later if you want higher accuracy and can
@@ -24,6 +24,8 @@ cmake --build build -j --config Release
 bash ./models/download-ggml-model.sh small.en
 
 echo ""
-echo "Done. Binary at: whisper.cpp/build/bin/whisper-cli"
-echo "Model at:        whisper.cpp/models/ggml-small.en.bin"
-echo "These paths match core/config.toml.example — copy it to config.toml as-is to start."
+echo "Done. The Whisper server was built successfully!"
+echo "Before running the SpeakType daemon, you MUST start the whisper server in the background:"
+echo ""
+echo "    ./whisper.cpp/build/bin/whisper-server -m ./whisper.cpp/models/ggml-small.en.bin -l en"
+echo ""

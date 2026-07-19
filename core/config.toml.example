@@ -2,8 +2,8 @@
 
 hotkey = "ALT+SPACE"
 
-whisper_bin = "../whisper.cpp/build/bin/whisper-cli"
-whisper_model = "../whisper.cpp/models/ggml-base.en.bin"
+# The URL of your local whisper.cpp server
+whisper_server_url = "http://127.0.0.1:8080"
 
 scratch_dir = "/tmp/speaktype"
 

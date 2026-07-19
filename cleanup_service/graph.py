@@ -42,6 +42,7 @@ APP_TO_BUCKET = {
     # Code Editors & Terminals
     "code": "code_editor",
     "electron": "code_editor",
+    "antigravity ide": "code_editor",
     "vscode": "code_editor",
     "cursor": "code_editor",
     "zed": "code_editor",

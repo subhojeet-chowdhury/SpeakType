@@ -32,21 +32,17 @@ fn main() -> Result<()> {
     let cfg = AppConfig::load()?;
     std::fs::create_dir_all(&cfg.scratch_dir)?;
     
+    let rt = tokio::runtime::Builder::new_current_thread().enable_all().build()?;
+    
     // --- Startup Validation ---
-    if !cfg.whisper_bin.exists() || !cfg.whisper_bin.is_file() {
-        tracing::error!("Whisper binary not found at {:?}. Please run scripts/setup_whisper.sh", cfg.whisper_bin);
-        anyhow::bail!("whisper binary missing");
-    }
-
-    if !cfg.whisper_model.exists() || !cfg.whisper_model.is_file() {
-        tracing::error!("Whisper model not found at {:?}. Please run scripts/setup_whisper.sh", cfg.whisper_model);
-        anyhow::bail!("whisper model missing");
+    tracing::info!("Validating whisper server at {}...", cfg.whisper_server_url);
+    if let Err(e) = rt.block_on(async { reqwest::get(&cfg.whisper_server_url).await }) {
+        tracing::error!("Could not connect to whisper server. Is it running? ({e})\nSee README or run scripts/setup_whisper.sh");
+        anyhow::bail!("whisper server unreachable");
     }
 
     let health_url = cfg.cleanup_service_url.replace("/cleanup", "/health");
     tracing::info!("Validating cleanup service at {}...", health_url);
-    
-    let rt = tokio::runtime::Builder::new_current_thread().enable_all().build()?;
     if let Err(e) = rt.block_on(async { reqwest::get(&health_url).await }) {
         tracing::error!("Could not connect to cleanup service. Is the Python uvicorn server running? ({e})");
         anyhow::bail!("cleanup service unreachable");
@@ -140,7 +136,7 @@ async fn run_pipeline(cfg: AppConfig, wav_path: PathBuf) {
     
     let transcribe_start = std::time::Instant::now();
 
-    let raw = match transcribe::transcribe(&cfg.whisper_bin, &cfg.whisper_model, &wav_path).await {
+    let raw = match transcribe::transcribe(&cfg.whisper_server_url, &wav_path).await {
         Ok(text) if !text.trim().is_empty() => text,
         Ok(_) => {
             tracing::warn!("transcript was empty, nothing to inject");
@@ -167,6 +163,7 @@ async fn run_pipeline(cfg: AppConfig, wav_path: PathBuf) {
         let app_context = focus::active_app_name().unwrap_or_else(|_| "unknown".to_string());
         let focus_time = focus_start.elapsed();
         tracing::info!("active app context detected: {} (took {}ms)", app_context, focus_time.as_millis());
+        tracing::info!("active app context : {}", app_context);
         
         let cleanup_start = std::time::Instant::now();
         if let Err(e) = cleanup::clean_transcript(&cfg.cleanup_service_url, &raw, &app_context, &mut injector, &cfg.injection_mode).await {

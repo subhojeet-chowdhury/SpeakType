@@ -38,8 +38,8 @@ The app instantly types out your words directly into whichever app you are using
 ```mermaid
 graph TD
     A[Hold ALT+SPACE] -->|Rust Audio Capture| B(Record Mic)
-    B -->|Release Hotkey| C(whisper.cpp)
-    C -->|Raw Transcript| D{Active App Detection}
+    B -->|Release Hotkey| C(Local Whisper HTTP Server)
+    C -->|Raw Transcript| D{Native Focus Detection API}
     D -->|Context: Slack/Code/Notes| E[FastAPI Python Service]
     E -->|Gemini Flash Lite Cleanup| F(Cleaned Text Stream)
     F -->|Enigo Keystroke Injection| G[Types Directly Into Your App]
@@ -49,10 +49,13 @@ graph TD
 
 SpeakType is split into two lightweight, decoupled services.
 
-### 1. Build the Whisper Engine
-First, clone the local inference engine and download the small.en model (~460MB):
+### 1. Build and Run the Whisper Server
+First, build the local inference engine and start the background HTTP server:
 ```bash
 ./scripts/setup_whisper.sh
+
+# Leave this running in a background terminal!
+./whisper.cpp/build/bin/whisper-server -m ./whisper.cpp/models/ggml-small.en.bin -l en
 ```
 
 ### 2. Start the AI Cleanup Service
