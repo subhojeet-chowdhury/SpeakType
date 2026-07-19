@@ -50,12 +50,13 @@ graph TD
 SpeakType is split into two lightweight, decoupled services.
 
 ### 1. Build and Run the Whisper Server
-First, build the local inference engine and start the background HTTP server:
+First, build the local inference engine and start the background HTTP server. By default, this downloads the `base.en` model (~140MB). You can swap it for the `small.en` model (~460MB) in `setup_whisper.sh` if you prefer higher accuracy and don't mind slightly longer latency.
+
 ```bash
 ./scripts/setup_whisper.sh
 
 # Leave this running in a background terminal!
-./whisper.cpp/build/bin/whisper-server -m ./whisper.cpp/models/ggml-small.en.bin -l en
+./whisper.cpp/build/bin/whisper-server -m ./whisper.cpp/models/ggml-base.en.bin -l en
 ```
 
 ### 2. Start the AI Cleanup Service

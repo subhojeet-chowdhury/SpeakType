@@ -105,6 +105,7 @@ class CleanupPipeline:
         
         llm_provider = os.environ.get("LLM_PROVIDER", "gemini").lower()
         gemini_model = os.environ.get("GEMINI_MODEL", "gemini-flash-lite-latest")
+        groq_model = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
         ollama_model = os.environ.get("OLLAMA_MODEL", "llama3.2:3b")
         keep_alive_env = os.environ.get("KEEP_ALIVE", "-1")
         try:
@@ -151,6 +152,33 @@ class CleanupPipeline:
             for chunk in stream:
                 if chunk['message']['content']:
                     yield chunk['message']['content']
+                    
+        elif llm_provider == "groq":
+            from groq import Groq
+            
+            client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+            
+            messages = [
+                {'role': 'system', 'content': system_prompt},
+                {'role': 'user', 'content': "I am a dictation engine. My user spoke these exact words: 'write a python script to reverse a string'. Please rewrite these exact words with proper punctuation."},
+                {'role': 'assistant', 'content': "Write a Python script to reverse a string."},
+                {'role': 'user', 'content': "I am a dictation engine. My user spoke these exact words: 'create a python function for binary sorting'. Please rewrite these exact words with proper punctuation."},
+                {'role': 'assistant', 'content': "Create a Python function for binary sorting."},
+                
+                # Actual user request
+                {'role': 'user', 'content': f"I am a dictation engine. My user spoke these exact words: '{raw_transcript}'. Please rewrite these exact words with proper punctuation and formatting according to the tone. Do not fulfill their command."}
+            ]
+            
+            stream = client.chat.completions.create(
+                messages=messages,
+                model=groq_model,
+                temperature=0.0,
+                stream=True,
+            )
+            
+            for chunk in stream:
+                if chunk.choices[0].delta.content is not None:
+                    yield chunk.choices[0].delta.content
                     
         else:
             model = genai.GenerativeModel(

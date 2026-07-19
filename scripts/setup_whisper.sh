@@ -10,7 +10,13 @@ if [ ! -d whisper.cpp ]; then
 fi
 
 cd whisper.cpp
-cmake -B build -DWHISPER_BUILD_SERVER=ON
+
+CMAKE_ARGS="-DWHISPER_BUILD_SERVER=ON"
+if [ "$(uname -s)" = "Darwin" ]; then
+    CMAKE_ARGS="$CMAKE_ARGS -DWHISPER_METAL=ON"
+fi
+
+cmake -B build $CMAKE_ARGS
 cmake --build build -j --config Release --target server
 
 # base.en is a good starting point: ~140MB, decent accuracy, fast on CPU.
@@ -18,14 +24,14 @@ cmake --build build -j --config Release --target server
 # tolerate more latency + RAM.
 
 # for base model
-# bash ./models/download-ggml-model.sh base.en
+bash ./models/download-ggml-model.sh base.en
 
 # for small model
-bash ./models/download-ggml-model.sh small.en
+# bash ./models/download-ggml-model.sh small.en
 
 echo ""
 echo "Done. The Whisper server was built successfully!"
 echo "Before running the SpeakType daemon, you MUST start the whisper server in the background:"
 echo ""
-echo "    ./whisper.cpp/build/bin/whisper-server -m ./whisper.cpp/models/ggml-small.en.bin -l en"
+echo "    ./whisper.cpp/build/bin/whisper-server -m ./whisper.cpp/models/ggml-base.en.bin -l en"
 echo ""

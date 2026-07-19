@@ -37,3 +37,6 @@ pub async fn transcribe(server_url: &str, wav_path: &Path) -> Result<String> {
         bail!("whisper server response missing 'text' field: {:?}", json);
     }
 }
+
+
+

@@ -1,3 +1,4 @@
+from types import UnionType
 import requests
 import json
 
@@ -27,5 +28,4 @@ def test_endpoint():
 
 if __name__ == "__main__":
     test_endpoint()
-
 
