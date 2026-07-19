@@ -20,6 +20,12 @@
   <p><em>Hold a hotkey anywhere on your desktop, speak, and release. Watch the transcript magically type itself out.</em></p>
 </div>
 
+## 💡 What is SpeakType?
+
+Imagine having a super-smart assistant that types exactly what you mean, anywhere on your computer. With SpeakType, you just hold a shortcut key (`ALT+SPACE`), speak your mind naturally, and let go. 
+
+The app instantly types out your words directly into whichever app you are using—whether you're sending a casual text in WhatsApp, drafting a professional email in Outlook, or brainstorming in Apple Notes. It automatically understands the context of the app you're in and formats your spoken words perfectly to match the situation, all while keeping your raw voice recordings 100% private and on your device.
+
 ## ✨ Features
 
 - **100% Local Voice Recognition**: Uses `whisper.cpp` to process your voice directly on your device. No audio ever leaves your computer.

@@ -15,6 +15,7 @@ pub async fn clean_transcript(
     raw_transcript: &str,
     app_context: &str,
     injector: &mut Injector,
+    injection_mode: &str,
 ) -> Result<()> {
     let client = reqwest::Client::new();
     let req_future = client
@@ -49,8 +50,11 @@ pub async fn clean_transcript(
             Some(c) => {
                 if let Ok(text) = std::str::from_utf8(&c) {
                     final_text.push_str(text);
-                    if let Err(e) = injector.inject_chunk(text) {
-                        tracing::error!("failed to inject chunk: {e}");
+                    
+                    if injection_mode != "batch" {
+                        if let Err(e) = injector.inject_chunk(text) {
+                            tracing::error!("failed to inject chunk: {e}");
+                        }
                     }
                 }
             }
@@ -58,6 +62,14 @@ pub async fn clean_transcript(
         }
     }
     
-    tracing::info!("injected (streamed): {final_text}");
+    if injection_mode == "batch" {
+        tracing::info!("injected (batch): {final_text}");
+        if let Err(e) = injector.inject_batch(&final_text) {
+            tracing::error!("failed to inject batch via clipboard: {e}");
+        }
+    } else {
+        tracing::info!("injected (streamed): {final_text}");
+    }
+
     Ok(())
 }

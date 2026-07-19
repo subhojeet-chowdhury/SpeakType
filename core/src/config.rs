@@ -22,6 +22,9 @@ pub struct AppConfig {
     /// If false, skip the cleanup service entirely and inject the raw Whisper
     /// transcript. Useful for testing Phase 1 in isolation.
     pub enable_cleanup: bool,
+
+    /// Text injection strategy: "stream" (keystrokes) or "batch" (clipboard).
+    pub injection_mode: String,
 }
 
 impl AppConfig {
@@ -35,6 +38,7 @@ impl AppConfig {
             .set_default("scratch_dir", "/tmp/speaktype")?
             .set_default("cleanup_service_url", "http://127.0.0.1:8008")?
             .set_default("enable_cleanup", true)?
+            .set_default("injection_mode", "batch")?
             .build()?;
 
         Ok(settings.try_deserialize()?)

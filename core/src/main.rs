@@ -161,15 +161,28 @@ async fn run_pipeline(cfg: AppConfig, wav_path: PathBuf) {
         let app_context = focus::active_app_name().unwrap_or_else(|_| "unknown".to_string());
         tracing::info!("active app context detected: {}", app_context);
         
-        if let Err(e) = cleanup::clean_transcript(&cfg.cleanup_service_url, &raw, &app_context, &mut injector).await {
+        if let Err(e) = cleanup::clean_transcript(&cfg.cleanup_service_url, &raw, &app_context, &mut injector, &cfg.injection_mode).await {
             tracing::warn!("cleanup service failed ({e}), falling back to raw transcript injection");
-            if let Err(e2) = injector.inject_chunk(&raw) {
-                tracing::error!("fallback injection failed: {e2}");
+            
+            if cfg.injection_mode == "batch" {
+                if let Err(e2) = injector.inject_batch(&raw) {
+                    tracing::error!("fallback batch injection failed: {e2}");
+                }
+            } else {
+                if let Err(e2) = injector.inject_chunk(&raw) {
+                    tracing::error!("fallback stream injection failed: {e2}");
+                }
             }
         }
     } else {
-        if let Err(e) = injector.inject_chunk(&raw) {
-            tracing::error!("injection failed: {e}");
+        if cfg.injection_mode == "batch" {
+            if let Err(e) = injector.inject_batch(&raw) {
+                tracing::error!("batch injection failed: {e}");
+            }
+        } else {
+            if let Err(e) = injector.inject_chunk(&raw) {
+                tracing::error!("stream injection failed: {e}");
+            }
         }
     }
 }
