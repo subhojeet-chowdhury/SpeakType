@@ -6,6 +6,7 @@
   [![FastAPI](https://img.shields.io/badge/FastAPI-Service-009688.svg)](https://fastapi.tiangolo.com)
   [![Whisper.cpp](https://img.shields.io/badge/Whisper-Local-blue.svg)](https://github.com/ggerganov/whisper.cpp)
   [![Gemini](https://img.shields.io/badge/Gemini-Flash_Lite-purple.svg)](https://ai.google.dev/)
+  [![Groq](https://img.shields.io/badge/Groq-Llama_3.3-red.svg)](https://groq.com/)
   
   <br />
   <a href="#how-it-works">How it Works</a> •
