@@ -73,3 +73,7 @@ pub async fn clean_transcript(
 
     Ok(())
 }
+
+
+git add .
+git commit -m "feat: added unified start script" -m "- Added start.sh unified runner to automatically build, configure, and boot the Whisper, FastAPI, and Rust daemon services simultaneously." -m "- Implemented process trap in start.sh for graceful background service shutdown on CTRL+C." -m "- Updated README.md to reflect Windows support and simplified the Quick Start guide." 

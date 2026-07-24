@@ -10,3 +10,4 @@ Cargo.lock
 docs/learning-roadmap.md
 README.MYSELF.md
 core/logs/
+logs/
