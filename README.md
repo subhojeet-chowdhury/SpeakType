@@ -97,8 +97,8 @@ Once both services are running:
 3. Speak normally
 4. Release the keys. Your text will instantly stream into the field perfectly formatted!
 
-### 4. Logs and Troubleshooting
-The Rust daemon writes daily rolling logs to `core/logs/speaktype.log.*`. If the daemon fails to start or a hotkey press is ignored, check these logs for detailed error messages.
+### 3. Logs and Troubleshooting
+The Rust daemon writes daily rolling logs to `logs/speaktype.log.*`. If the daemon fails to start or a hotkey press is ignored, check these logs for detailed error messages. Background services log to `logs/whisper.log` and `logs/cleanup.log`.
 
 ---
 *Built with Rust, Python, and a lot of caffeine.*
