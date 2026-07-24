@@ -17,7 +17,7 @@
 ---
 
 <div align="center">
-  <img src="https://via.placeholder.com/800x450.png?text=[Insert+Demo+Video/GIF+Here]" alt="SpeakType Demo Video">
+  <video src="speakType-in-action.mov" width="800" autoplay loop muted playsinline></video>
   <p><em>Hold a hotkey anywhere on your desktop, speak, and release. Watch the transcript magically type itself out.</em></p>
 </div>
 
