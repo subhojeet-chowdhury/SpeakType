@@ -17,7 +17,7 @@
 ---
 
 <div align="center">
-  <video src="speakType-in-action.mov" width="800" autoplay loop muted playsinline></video>
+  https://github.com/subhojeet-chowdhury/SpeakType/raw/main/speakType-in-action.mov
   <p><em>Hold a hotkey anywhere on your desktop, speak, and release. Watch the transcript magically type itself out.</em></p>
 </div>
 
@@ -67,8 +67,6 @@ For the absolute best balance of speed, privacy, and accuracy, we recommend:
 2. **LLM:** `groq` using the `llama-3.3-70b-versatile` model.
 
 *Why?* The local STT avoids network upload overhead for the heavy audio file (transcribing locally in <200ms), while the Groq LLM easily handles the text cleanup in <500ms.
-
-## 🚀 Quick Start
 
 ## 🚀 Quick Start (For Developers)
 
