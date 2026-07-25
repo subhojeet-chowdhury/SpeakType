@@ -17,7 +17,7 @@
 ---
 
 <div align="center">
-  <video src="https://github.com/subhojeet-chowdhury/SpeakType/raw/main/speakType-in-action.mov" autoplay loop muted playsinline></video>
+  <video src="https://github.com/subhojeet-chowdhury/SpeakType/raw/main/speakType-in-action.mp4" autoplay loop muted playsinline></video>
   <p><em>Hold a hotkey anywhere on your desktop, speak, and release. Watch the transcript magically type itself out.</em></p>
 </div>
 
