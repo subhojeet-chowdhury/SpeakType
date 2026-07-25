@@ -19,7 +19,7 @@
 ---
 
 <div align="center">
-  <img width="640" height="480" alt="speakType-in-action" src="https://github.com/user-attachments/assets/b358699a-82c8-49df-a15a-bfbee4cb0ec1" />
+  <img width="640" height="480" alt="speakType-in-action" src="https://github.com/user-attachments/assets/8770ebd3-d0f3-49c3-8392-23470277dc67" />
   <p><em>Hold a hotkey anywhere on your desktop, speak, and release. Watch the transcript magically type itself out.</em></p>
 </div>
 
