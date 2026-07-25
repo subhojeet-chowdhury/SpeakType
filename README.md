@@ -1,3 +1,5 @@
+
+
 <div align="center">
   <h1>🎙️ SpeakType</h1>
   <p><strong>A lightning-fast, privacy-first, cross-application dictation tool for Windows, macOS, & Linux.</strong></p>
@@ -17,7 +19,8 @@
 ---
 
 <div align="center">
-  <video src="https://github.com/subhojeet-chowdhury/SpeakType/raw/main/speakType-in-action.mp4" autoplay loop muted playsinline></video>
+  <!-- <img width="640" height="480" alt="speakType-in-action" src="https://github.com/user-attachments/assets/b358699a-82c8-49df-a15a-bfbee4cb0ec1" /> -->
+  https://github.com/subhojeet-chowdhury/SpeakType/raw/main/speakType-in-action.mov
   <p><em>Hold a hotkey anywhere on your desktop, speak, and release. Watch the transcript magically type itself out.</em></p>
 </div>
 
